@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Platform user with role-based access",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["FARMER", "CONSUMER", "RIDER", "AGENT", "ADMIN"] },
+        "walletBalance": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Agricultural produce listed by farmers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "freshnessScore": { "type": "number" },
+        "traceabilityHash": { "type": "string" }
+      }
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Consumer purchase of produce",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "consumerId": { "type": "string" },
+        "status": { "type": "string" },
+        "totalPrice": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Produce catalog"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Order transactions"
+    }
+  }
+}

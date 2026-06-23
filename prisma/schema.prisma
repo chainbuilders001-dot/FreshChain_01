@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Dynamic User Role Matrix spanning all core ecosystem personas
+enum Role {
+  FARMER
+  BUYER
+  RIDER
+  AGRO_AGENT
+  ADMIN
+}
+
+/// Category map harmonized perfectly with current UI filter specifications
+enum Category {
+  GRAINS
+  VEGETABLES
+  FRUITS
+  TUBERS
+  LIVESTOCK
+  OTHER
+}
+
+/// Escrow multi-stage delivery track state transition lifecycle
+enum OrderStatus {
+  PENDING
+  PAID
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+/// Secure states mapping the escrow release life-cycle
+enum EscrowStatus {
+  IN_ESCROW
+  RELEASED
+  REFUNDED
+}
+
+/// Ecosystem Core User Entity
+model User {
+  id                  String           @id @default(uuid())
+  name                String
+  email               String           @unique
+  passwordHash        String
+  phoneNumber         String           // Essential fall-back routing logic for USSD networks
+  latitude            Float?           // Geo-coordinate float component (Latitude)
+  longitude           Float?           // Geo-coordinate float component (Longitude)
+  isVerified          Boolean          @default(false)
+  role                Role             @default(BUYER)
+  walletBalance       Float            @default(0.0) // Internal digital wallet balance representing earned escrow payouts
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  // Ecosystem Relational Directives
+  products            Product[]        @relation("FarmerProducts")
+  ordersAsBuyer       Order[]          @relation("BuyerOrders")
+  logisticsAsRider    RiderLogistics[] @relation("RiderLogistics")
+}
+
+/// Secure Ledger mapping supply chain inventory and farm fresh batches
+model Product {
+  id             String      @id @default(uuid())
+  title          String
+  description    String
+  category       Category
+  pricePerUnit   Float       // Standard currency price units
+  stockQuantity  Float       // Total weight, volume or unit stock tracking metrics
+  freshnessScore Int         // Quality decay scale index (e.g. 0-100 metric)
+  harvestDate    DateTime
+  blockchainHash String      @unique // Unique immutable traceability ledger proof hashes
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Structural linkages
+  farmerId       String
+  farmer         User        @relation("FarmerProducts", fields: [farmerId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+}
+
+/// Parent Transaction Log representing Escrow Vault Purchases
+model Order {
+  id                String             @id @default(uuid())
+  status            OrderStatus        @default(PENDING)
+  totalAmount       Float
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Structural linkages
+  buyerId           String
+  buyer             User               @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  items             OrderItem[]
+  escrowTransaction EscrowTransaction?
+  riderLogistics    RiderLogistics[]
+}
+
+/// Individual item transaction lines binding products to parent orders
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Structural linkages
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+/// Escrow Vault Log validating Flutterwave transactions and secure lockups
+model EscrowTransaction {
+  id             String       @id @default(uuid())
+  referenceHash  String       @unique // Cryptographic escrow verification ledger hash
+  flutterwaveRef String       @unique // Official Flutterwave settlement checkout API transaction ID
+  status         EscrowStatus @default(IN_ESCROW)
+  amount         Float
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Structural linkages
+  orderId        String       @unique
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+/// Dispatch Coordinate Logs for Live Map tracking and active routing updates
+model RiderLogistics {
+  id        String   @id @default(uuid())
+  latitude  Float    // Instant float mapping for real-time tracking (Latitude)
+  longitude Float    // Instant float mapping for real-time tracking (Longitude)
+  updatedAt DateTime @updatedAt
+
+  // Structural linkages
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  riderId   String
+  rider     User     @relation("RiderLogistics", fields: [riderId], references: [id], onDelete: Cascade)
+}
+
+/// AI Diagnostic Logs tracking crop conditions
+model AICropScanLog {
+  id              String   @id @default(uuid())
+  userId          String
+  fileName        String
+  diagnosis       String
+  confidence      Float
+  severity        String
+  recommendations String   @default("[]") // Stringified JSON list of actions
+  createdAt       DateTime @default(now())
+}
+

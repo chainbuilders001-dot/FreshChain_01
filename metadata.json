@@ -1,0 +1,8 @@
+{
+  "name": "FreshChain",
+  "description": "An AI-powered agricultural ecosystem reducing food waste and empowering smallholder farmers across Africa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
